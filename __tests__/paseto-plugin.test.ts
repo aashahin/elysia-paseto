@@ -1,6 +1,25 @@
 import { beforeAll, describe, expect, it } from "bun:test";
 import { Elysia } from "elysia";
+import type { PasetoPayload } from "../index.js";
 import { paseto } from "../index.js";
+
+async function verifyPayload(
+  appInstance: Elysia,
+  token: string
+): Promise<PasetoPayload> {
+  // @ts-ignore - decorator type not exposed by Elysia
+  const decoded = (await appInstance.decorator.paseto.verify(token)) as
+    | false
+    | PasetoPayload;
+
+  expect(decoded).not.toBe(false);
+
+  if (!decoded) {
+    throw new Error("Token verification failed");
+  }
+
+  return decoded;
+}
 
 describe("PASETO Plugin", () => {
   const testSecret = "test-secret-key-32-bytes-long!";
@@ -37,8 +56,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded).toBeDefined();
       expect(decoded.iat).toBeDefined();
@@ -50,15 +68,19 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded).toBeDefined();
       expect(decoded.exp).toBeDefined();
       expect(typeof decoded.exp).toBe("string");
 
+      const expValue = decoded.exp;
+      if (!expValue) {
+        throw new Error("Expected token to include exp claim");
+      }
+
       // Verify expiration is in the future
-      const expTime = new Date(decoded.exp).getTime();
+      const expTime = new Date(expValue).getTime();
       const now = Date.now();
       expect(expTime).toBeGreaterThan(now);
     });
@@ -72,8 +94,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded.exp).toBe(customExp);
     });
@@ -98,8 +119,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded.id).toBe(payload.id);
       expect(decoded.email).toBe(payload.email);
@@ -115,8 +135,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded).toBeDefined();
       expect(decoded).not.toBe(false);
@@ -220,8 +239,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await noExpApp.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await noExpApp.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(noExpApp, token);
 
       expect(decoded).toBeDefined();
       expect(decoded).not.toBe(false);
@@ -240,10 +258,14 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app30s.decorator.paseto.sign({ id: "user123" });
-      // @ts-ignore
-      const decoded = await app30s.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app30s, token);
 
-      const expTime = new Date(decoded.exp).getTime();
+      const expValue = decoded.exp;
+      if (!expValue) {
+        throw new Error("Expected exp claim for 30s token");
+      }
+
+      const expTime = new Date(expValue).getTime();
       const now = Date.now();
       const diff = expTime - now;
 
@@ -263,10 +285,14 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app5m.decorator.paseto.sign({ id: "user123" });
-      // @ts-ignore
-      const decoded = await app5m.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app5m, token);
 
-      const expTime = new Date(decoded.exp).getTime();
+      const expValue = decoded.exp;
+      if (!expValue) {
+        throw new Error("Expected exp claim for 5m token");
+      }
+
+      const expTime = new Date(expValue).getTime();
       const now = Date.now();
       const diff = expTime - now;
 
@@ -286,10 +312,14 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app2h.decorator.paseto.sign({ id: "user123" });
-      // @ts-ignore
-      const decoded = await app2h.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app2h, token);
 
-      const expTime = new Date(decoded.exp).getTime();
+      const expValue = decoded.exp;
+      if (!expValue) {
+        throw new Error("Expected exp claim for 2h token");
+      }
+
+      const expTime = new Date(expValue).getTime();
       const now = Date.now();
       const diff = expTime - now;
 
@@ -309,10 +339,14 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app7d.decorator.paseto.sign({ id: "user123" });
-      // @ts-ignore
-      const decoded = await app7d.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app7d, token);
 
-      const expTime = new Date(decoded.exp).getTime();
+      const expValue = decoded.exp;
+      if (!expValue) {
+        throw new Error("Expected exp claim for 7d token");
+      }
+
+      const expTime = new Date(expValue).getTime();
       const now = Date.now();
       const diff = expTime - now;
 
@@ -332,10 +366,14 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app300.decorator.paseto.sign({ id: "user123" });
-      // @ts-ignore
-      const decoded = await app300.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app300, token);
 
-      const expTime = new Date(decoded.exp).getTime();
+      const expValue = decoded.exp;
+      if (!expValue) {
+        throw new Error("Expected exp claim for 300s token");
+      }
+
+      const expTime = new Date(expValue).getTime();
       const now = Date.now();
       const diff = expTime - now;
 
@@ -368,8 +406,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded.name).toBe(payload.name);
       expect(decoded.description).toBe(payload.description);
@@ -385,8 +422,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded.data).toBe(longString);
     });
@@ -406,8 +442,7 @@ describe("PASETO Plugin", () => {
       const accessToken = await app.decorator.paseto.sign(userPayload);
 
       // Step 2: Verify token on subsequent requests
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(accessToken);
+      const decoded = await verifyPayload(app, accessToken);
 
       expect(decoded.id).toBe("user123");
       expect(decoded.email).toBe("user@example.com");
@@ -425,8 +460,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await app.decorator.paseto.sign(customerPayload);
-      // @ts-ignore
-      const decoded = await app.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(app, token);
 
       expect(decoded.id).toBe("customer789");
       expect(decoded.tenantId).toBe("tenant456");
@@ -456,12 +490,8 @@ describe("PASETO Plugin", () => {
       // @ts-ignore
       const refreshedToken = await app.decorator.paseto.sign(refreshedPayload);
 
-      // Both should be valid but different
-      // @ts-ignore
-      const originalDecoded = await app.decorator.paseto.verify(originalToken);
-      // @ts-ignore
-      const refreshedDecoded =
-        await app.decorator.paseto.verify(refreshedToken);
+      const originalDecoded = await verifyPayload(app, originalToken);
+      const refreshedDecoded = await verifyPayload(app, refreshedToken);
 
       expect(originalDecoded.sessionId).toBe("session1");
       expect(refreshedDecoded.sessionId).toBe("session2");
@@ -485,9 +515,8 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const stateToken =
-        await shortLivedApp.decorator.paseto.sign(statePayload);
-      // @ts-ignore
-      const decoded = await shortLivedApp.decorator.paseto.verify(stateToken);
+        await shortLivedApp.decorator.paseto?.sign(statePayload);
+      const decoded = await verifyPayload(shortLivedApp, stateToken ?? "");
 
       expect(decoded.state).toBe("random-state-value");
       expect(decoded.provider).toBe("google");
@@ -555,8 +584,7 @@ describe("PASETO Plugin", () => {
 
       // @ts-ignore
       const token = await noExpApp.decorator.paseto.sign(payload);
-      // @ts-ignore
-      const decoded = await noExpApp.decorator.paseto.verify(token);
+      const decoded = await verifyPayload(noExpApp, token);
 
       expect(decoded).toBeDefined();
       expect(decoded.id).toBe("user123");
