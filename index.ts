@@ -69,6 +69,22 @@ function convertExpiration(exp: string | number): string {
 }
 
 /**
+ * PASETO instance type - defines the API surface of a configured PASETO plugin
+ */
+export interface PasetoInstance {
+  /**
+   * Sign a payload and create a PASETO token
+   */
+  sign: (payload: PasetoPayload) => Promise<string>;
+
+  /**
+   * Verify and decode a PASETO token
+   * Returns false if token is invalid, undefined, or verification fails
+   */
+  verify: (token?: string) => Promise<false | PasetoPayload>;
+}
+
+/**
  * Ensure secret is properly formatted for PASETO v4
  * Key must be 32 bytes and prepended with k4.local. (PASERK format)
  */
