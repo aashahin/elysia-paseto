@@ -1,0 +1,19 @@
+{
+  "name": "elysia-paseto",
+  "version": "1.0.3",
+  "module": "index.ts",
+  "dependencies": {
+    "paseto-ts": "^2.0.5"
+  },
+  "peerDependencies": {
+    "elysia": "^1.4.25",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aashahin/elysia-paseto"
+  }
+}
